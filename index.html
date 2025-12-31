@@ -512,6 +512,7 @@
         const nameInput = document.getElementById('nameInput');
         const copyBtn = document.getElementById('copyBtn');
         const fromName = document.getElementById('fromName');
+        const signatureText = document.getElementById('signatureText');
 
         function checkViewMode() {
             const params = new URLSearchParams(window.location.search);
@@ -536,6 +537,7 @@
             recipientName.innerHTML = t.greeting(currentName);
             cardMessage.textContent = t.messages[0];
             cardWishes.textContent = t.wishes;
+            signatureText.textContent = t.signature;
         }
 
         document.querySelectorAll('.type-btn').forEach(btn => {
