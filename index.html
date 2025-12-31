@@ -470,7 +470,8 @@
             <p class="wishes" id="cardWishes">May this year bring us closer together and fill our lives with beautiful
                 memories.</p>
 
-            <div class="signature">With love, <span class="from-name" id="fromName">♥</span></div>
+            <div class="signature"><span id="signatureText">With all my love,</span> <span class="from-name"
+                    id="fromName">♥</span></div>
 
             <div class="btn-container">
                 <button class="share-btn" onclick="generateLink()">Generate Link</button>
@@ -487,19 +488,22 @@
                 icon: '💕',
                 messages: ['"Every moment with you is a blessing. Here\'s to another year of love."'],
                 wishes: 'May this year bring us closer together and fill our lives with beautiful memories.',
-                greeting: (name) => name ? `To my dearest <span class="name-highlight">${name}</span>` : 'To my dearest love'
+                greeting: (name) => name ? `To my dearest <span class="name-highlight">${name}</span>` : 'To my dearest love',
+                signature: 'With all my love,'
             },
             '2': {
                 icon: '🌟',
                 messages: ['"True friends like you are rare gems. Cheers to our friendship!"'],
                 wishes: 'May this year bring you success, happiness, and all the good things you deserve.',
-                greeting: (name) => name ? `Dear <span class="name-highlight">${name}</span>` : 'Dear Friend'
+                greeting: (name) => name ? `Dear <span class="name-highlight">${name}</span>` : 'Dear Friend',
+                signature: 'Cheers,'
             },
             '3': {
                 icon: '🏠',
                 messages: ['"Family is the greatest gift. Grateful for every moment with you."'],
                 wishes: 'May this year strengthen our bond and fill our home with love and prosperity.',
-                greeting: (name) => name ? `Dearest <span class="name-highlight">${name}</span>` : 'Dearest Family'
+                greeting: (name) => name ? `Dearest <span class="name-highlight">${name}</span>` : 'Dearest Family',
+                signature: 'With warm wishes,'
             }
         };
 
