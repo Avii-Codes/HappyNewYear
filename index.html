@@ -448,13 +448,13 @@
             <div class="creator-section">
                 <label class="section-label">Choose Card Type</label>
                 <div class="type-buttons">
-                    <button class="type-btn active" data-type="girlfriend">
+                    <button class="type-btn active" data-type="1">
                         <span class="icon">💕</span>My Love
                     </button>
-                    <button class="type-btn" data-type="friend">
+                    <button class="type-btn" data-type="2">
                         <span class="icon">🌟</span>Friend
                     </button>
-                    <button class="type-btn" data-type="family">
+                    <button class="type-btn" data-type="3">
                         <span class="icon">🏠</span>Family
                     </button>
                 </div>
@@ -483,19 +483,19 @@
 
     <script>
         const cardTypes = {
-            girlfriend: {
+            '1': {
                 icon: '💕',
                 messages: ['"Every moment with you is a blessing. Here\'s to another year of love."'],
                 wishes: 'May this year bring us closer together and fill our lives with beautiful memories.',
                 greeting: (name) => name ? `To my dearest <span class="name-highlight">${name}</span>` : 'To my dearest love'
             },
-            friend: {
+            '2': {
                 icon: '🌟',
                 messages: ['"True friends like you are rare gems. Cheers to our friendship!"'],
                 wishes: 'May this year bring you success, happiness, and all the good things you deserve.',
                 greeting: (name) => name ? `Dear <span class="name-highlight">${name}</span>` : 'Dear Friend'
             },
-            family: {
+            '3': {
                 icon: '🏠',
                 messages: ['"Family is the greatest gift. Grateful for every moment with you."'],
                 wishes: 'May this year strengthen our bond and fill our home with love and prosperity.',
@@ -503,7 +503,7 @@
             }
         };
 
-        let currentType = 'girlfriend', currentName = '', generatedUrl = '';
+        let currentType = '1', currentName = '', generatedUrl = '';
         const card = document.getElementById('card');
         const cardIcon = document.getElementById('cardIcon');
         const recipientName = document.getElementById('recipientName');
