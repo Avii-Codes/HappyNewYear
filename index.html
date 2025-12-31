@@ -1815,48 +1815,16 @@
                 this.card.style.transformStyle = 'preserve-3d';
                 this.card.style.transition = 'transform 0.1s linear'; // minimal CSS transition, mostly JS handled
 
-                // Interaction Events
                 // Desktop
                 document.addEventListener('mousemove', (e) => this.handleMove(e.clientX, e.clientY));
                 document.addEventListener('mouseleave', () => this.handleEnd());
 
                 // Mobile
-
-
-                // Mobile - explicit touch events with threshold to distinguish tap vs drag
-                let touchStartX = 0;
-                let touchStartY = 0;
-                let isDragging = false;
-                const dragThreshold = 10;
-
-                document.addEventListener('touchstart', (e) => {
-                    if (e.touches.length > 0) {
-                        touchStartX = e.touches[0].clientX;
-                        touchStartY = e.touches[0].clientY;
-                        isDragging = false;
-                    }
-                }, { passive: true });
-
                 document.addEventListener('touchmove', (e) => {
-                    if (e.touches.length > 0) {
-                        const x = e.touches[0].clientX;
-                        const y = e.touches[0].clientY;
-
-                        if (!isDragging) {
-                            if (Math.hypot(x - touchStartX, y - touchStartY) > dragThreshold) {
-                                isDragging = true;
-                            }
-                        }
-
-                        if (isDragging) this.handleMove(x, y);
-                    }
+                    // Only tilt if touching near the card area approx
+                    this.handleMove(e.touches[0].clientX, e.touches[0].clientY);
                 }, { passive: true });
-
                 document.addEventListener('touchend', () => this.handleEnd());
-                document.addEventListener('touchcancel', () => this.handleEnd());
-
-                // Safety resets
-                window.addEventListener('blur', () => this.handleEnd());
 
                 // Resize handler
                 window.addEventListener('resize', () => {
