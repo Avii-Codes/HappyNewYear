@@ -43,6 +43,16 @@
             pointer-events: none;
         }
 
+        #welcomeCanvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 100;
+            pointer-events: none;
+        }
+
         .gradient-overlay {
             position: fixed;
             top: 0;
@@ -69,11 +79,11 @@
 
         .card {
             background: linear-gradient(165deg,
-                    rgba(255, 255, 255, 0.1) 0%,
-                    rgba(255, 255, 255, 0.03) 50%,
-                    rgba(0, 0, 0, 0.15) 100%);
-            backdrop-filter: blur(50px);
-            -webkit-backdrop-filter: blur(50px);
+                    rgba(255, 255, 255, 0.03) 0%,
+                    rgba(255, 255, 255, 0.005) 50%,
+                    rgba(0, 0, 0, 0.02) 100%);
+            backdrop-filter: blur(3px);
+            -webkit-backdrop-filter: blur(3px);
             border-radius: clamp(20px, 3vw, 32px);
             padding: clamp(25px, 4vh, 55px) clamp(20px, 4vw, 50px);
             text-align: center;
@@ -148,6 +158,34 @@
             margin-bottom: clamp(10px, 1.5vh, 20px);
             display: block;
             filter: drop-shadow(0 0 15px rgba(255, 100, 150, 0.4));
+            cursor: pointer;
+            transition: transform 0.2s ease;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+            -webkit-user-select: none;
+            outline: none;
+        }
+
+        .card-icon:active {
+            transform: scale(0.9);
+        }
+
+        @keyframes spin-pop {
+            0% {
+                transform: scale(1) rotate(0deg);
+            }
+
+            50% {
+                transform: scale(1.3) rotate(180deg);
+            }
+
+            100% {
+                transform: scale(1) rotate(360deg);
+            }
+        }
+
+        .icon-animate {
+            animation: spin-pop 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
 
         .subtitle {
@@ -293,11 +331,10 @@
             font-size: clamp(1rem, 2vw, 1.5rem);
             color: rgba(255, 255, 255, 0.8);
             line-height: 1.7;
-            margin: clamp(10px, 1.5vh, 20px) 0;
+            margin: clamp(10px, 1.5vh, 20px) auto;
             font-style: italic;
-            max-width: 480px;
-            margin-left: auto;
-            margin-right: auto;
+            width: 100%;
+            text-align: center;
         }
 
         .wishes {
@@ -305,8 +342,9 @@
             color: rgba(255, 255, 255, 0.5);
             line-height: 1.8;
             font-weight: 300;
-            max-width: 420px;
             margin: clamp(10px, 1.5vh, 20px) auto 0;
+            width: 100%;
+            text-align: center;
         }
 
         .signature {
@@ -409,10 +447,6 @@
             .message {
                 margin: 8px 0;
             }
-
-            .wishes {
-                display: none;
-            }
         }
 
         @media (max-width: 400px) {
@@ -429,6 +463,7 @@
 
 <body>
     <canvas id="particleCanvas"></canvas>
+    <canvas id="welcomeCanvas"></canvas>
     <div class="gradient-overlay"></div>
 
     <div class="card-wrapper">
@@ -499,7 +534,7 @@
                 signature: 'Cheers,'
             },
             '3': {
-                icon: '🏠',
+                icon: '👨‍👩‍👧‍👦',
                 messages: ['"Family is the greatest gift. Grateful for every moment with you."'],
                 wishes: 'May this year strengthen our bond and fill our home with love and prosperity.',
                 greeting: (name) => name ? `Dearest <span class="name-highlight">${name}</span>` : 'Dearest Family',
@@ -579,62 +614,1028 @@
             }).catch(() => prompt('Copy this link:', generatedUrl));
         }
 
+        // === BURST STAR CLASS (For Type 2 Tap Interaction) ===
+        class BurstStar {
+            constructor(centerX, centerY, delay) {
+                this.centerX = centerX;
+                this.centerY = centerY;
+                this.delay = delay;
+                this.started = false;
+                this.startTime = 0;
+                this.lifetime = 1000 + Math.random() * 500;
+                this.reset();
+            }
+            reset() {
+                const angle = Math.random() * Math.PI * 2;
+                const speed = Math.random() * 8 + 4;
+                this.x = this.centerX;
+                this.y = this.centerY;
+                this.vx = Math.cos(angle) * speed;
+                this.vy = Math.sin(angle) * speed;
+                this.size = Math.random() * 8 + 4;
+                this.rotation = Math.random() * Math.PI * 2;
+                this.rotationSpeed = (Math.random() - 0.5) * 0.2;
+                this.opacity = 1;
+                this.gravity = 0.15;
+                this.friction = 0.95;
+                this.color = Math.random() < 0.5 ? '#ffd700' : '#ffffff'; // Gold or White
+                this.sparkles = []; // No trails for performance, but structure kept if needed
+            }
+            update(elapsed) {
+                if (elapsed < this.delay) return false;
+                if (!this.started) {
+                    this.started = true;
+                    this.startTime = elapsed;
+                }
+                const age = elapsed - this.startTime;
+                if (age > this.lifetime) return true;
+
+                this.vy += this.gravity;
+                this.vx *= this.friction;
+                this.vy *= this.friction;
+                this.x += this.vx;
+                this.y += this.vy;
+                this.rotation += this.rotationSpeed;
+                this.opacity = Math.max(0, 1 - (age / this.lifetime));
+                return false;
+            }
+            draw() {
+                if (!this.started || this.opacity <= 0) return;
+                welcomeCtx.save();
+                welcomeCtx.translate(this.x, this.y);
+                welcomeCtx.rotate(this.rotation);
+                welcomeCtx.globalAlpha = this.opacity;
+                welcomeCtx.fillStyle = this.color;
+                welcomeCtx.shadowColor = this.color;
+                welcomeCtx.shadowBlur = 10;
+
+                // Draw Star
+                welcomeCtx.beginPath();
+                for (let i = 0; i < 5; i++) {
+                    const angle = (i * Math.PI * 2) / 5 - Math.PI / 2;
+                    const r = this.size;
+                    welcomeCtx.lineTo(Math.cos(angle) * r, Math.sin(angle) * r);
+                    const innerAngle = angle + Math.PI / 5;
+                    const rInner = r * 0.5;
+                    welcomeCtx.lineTo(Math.cos(innerAngle) * rInner, Math.sin(innerAngle) * rInner);
+                }
+                welcomeCtx.closePath();
+                welcomeCtx.fill();
+                welcomeCtx.restore();
+            }
+        }
+
+        // === TAP PARTICLES SYSTEM ===
+        let tapParticles = [];
+
+        function updateAndDrawTapParticles() {
+            const now = performance.now();
+            tapParticles = tapParticles.filter(p => {
+                const done = p.update(now);
+                p.draw();
+                return !done;
+            });
+        }
+
+        // Tap animation for top icon
+        cardIcon.addEventListener('click', function (e) {
+            // Play animation
+            this.classList.remove('icon-animate');
+            void this.offsetWidth; // Trigger reflow
+            this.classList.add('icon-animate');
+
+            // Add a mini burst of particles at icon position
+            const rect = this.getBoundingClientRect();
+            const centerX = rect.left + rect.width / 2;
+            const centerY = rect.top + rect.height / 2;
+
+            // Spawn particles into the specialized tapParticles array
+            for (let i = 0; i < 15; i++) {
+                let p;
+                if (currentType === '1') {
+                    p = new BurstHeart(centerX, centerY, 0);
+                } else if (currentType === '2') {
+                    p = new BurstStar(centerX, centerY, 0);
+                } else {
+                    p = new WarmConfetti(0);
+                    p.x = centerX; p.y = centerY;
+                }
+
+                p.size = (p.size || 10) * 0.5; // Smaller particles
+                p.lifetime = (p.lifetime || 2000) * 0.5; // Shorter life
+                if (p.speed) p.speed *= 0.5;
+
+                // Ensure the particle is initialized with current time reference if needed
+                // Our classes set startTime on first update(), so passing 0 delay works fine with performance.now() later.
+                tapParticles.push(p);
+            }
+
+            // Note: We no longer need to manually trigger loops here because 
+            // updateAndDrawTapParticles will be called in the main loops.
+        });
+
+
         if (!checkViewMode()) updateCardContent();
 
-        // Particles
+        // ========================================
+        // WELCOMING ANIMATION SYSTEM
+        // Only plays once when viewing a shared link
+        // ========================================
         const canvas = document.getElementById('particleCanvas');
         const ctx = canvas.getContext('2d');
-        function resizeCanvas() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+        const welcomeCanvas = document.getElementById('welcomeCanvas');
+        const welcomeCtx = welcomeCanvas.getContext('2d');
+
+        let particles = [];
+        let animationRunning = false;
+        let animationFrame = null;
+        const isViewMode = card.classList.contains('view-mode');
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            welcomeCanvas.width = window.innerWidth;
+            welcomeCanvas.height = window.innerHeight;
+        }
         resizeCanvas();
         window.addEventListener('resize', resizeCanvas);
 
-        class Particle {
-            constructor() { this.reset(); }
+        // === TYPE 1: HEART BURST ANIMATION (Love) ===
+        class BurstHeart {
+            constructor(centerX, centerY, delay) {
+                this.centerX = centerX;
+                this.centerY = centerY;
+                this.delay = delay;
+                this.started = false;
+                this.startTime = 0;
+                this.lifetime = 4500 + Math.random() * 2000;
+                this.sparkles = [];
+                this.reset();
+            }
+            reset() {
+                // Explosive fountain effect - mostly upward
+                const angle = -Math.PI / 2 + (Math.random() - 0.5) * 1.5;
+                const speed = Math.random() * 12 + 6; // Faster explosion
+                this.x = this.centerX;
+                this.y = this.centerY;
+                this.vx = Math.cos(angle) * speed;
+                this.vy = Math.sin(angle) * speed;
+                this.size = Math.random() * 20 + 10;
+                this.targetSize = this.size;
+                this.scale = 0; // Pop-in effect
+                this.rotation = Math.random() * Math.PI * 2;
+                this.rotationSpeed = (Math.random() - 0.5) * 0.1;
+                this.opacity = 1;
+                this.gravity = 0.15;
+                this.friction = 0.96;
+                this.flutter = Math.random() * Math.PI * 2;
+                this.flutterSpeed = Math.random() * 0.05 + 0.02;
+
+                const colors = [
+                    ['#ff0044', '#ff6b9d'], // Deep Red to Pink
+                    ['#ff1a5e', '#ffadd6'], // Hot Pink to Light Pink
+                    ['#d60036', '#ff4d6d'], // Ruby
+                    ['#ff85a2', '#ffffff']  // Soft Pink to White
+                ];
+                const c = colors[Math.floor(Math.random() * colors.length)];
+                this.color1 = c[0];
+                this.color2 = c[1];
+            }
+            update(elapsed) {
+                if (elapsed < this.delay) return false;
+                if (!this.started) {
+                    this.started = true;
+                    this.startTime = elapsed;
+                }
+                const age = elapsed - this.startTime;
+                if (age > this.lifetime) return true;
+
+                // Physics
+                this.vy += this.gravity;
+                this.vx *= this.friction;
+                this.vy *= this.friction;
+
+                // Add flutter (side-to-side sway)
+                this.flutter += this.flutterSpeed;
+                this.x += this.vx + Math.sin(this.flutter) * 0.5;
+                this.y += this.vy;
+                this.rotation += this.rotationSpeed;
+
+                // Pop-in scale
+                if (this.scale < 1) this.scale += 0.05;
+
+                // Fade out
+                this.opacity = Math.max(0, 1 - (age / this.lifetime));
+
+                // Add magical sparkles trail
+                if (Math.random() < 0.2 && this.opacity > 0.5) {
+                    this.sparkles.push({
+                        x: this.x,
+                        y: this.y,
+                        vx: (Math.random() - 0.5) * 2,
+                        vy: (Math.random() - 0.5) * 2,
+                        size: Math.random() * 3 + 1,
+                        opacity: 1,
+                        decay: 0.05
+                    });
+                }
+
+                // Update sparkles
+                for (let i = this.sparkles.length - 1; i >= 0; i--) {
+                    const s = this.sparkles[i];
+                    s.x += s.vx;
+                    s.y += s.vy;
+                    s.opacity -= s.decay;
+                    if (s.opacity <= 0) this.sparkles.splice(i, 1);
+                }
+
+                return false;
+            }
+            draw() {
+                if (!this.started || this.opacity <= 0) return;
+
+                // Draw sparkles trail
+                this.sparkles.forEach(s => {
+                    welcomeCtx.globalAlpha = s.opacity * this.opacity;
+                    welcomeCtx.fillStyle = '#fff';
+                    welcomeCtx.beginPath();
+                    welcomeCtx.arc(s.x, s.y, s.size, 0, Math.PI * 2);
+                    welcomeCtx.fill();
+                });
+
+                // Draw Heart
+                welcomeCtx.save();
+                welcomeCtx.translate(this.x, this.y);
+                welcomeCtx.rotate(this.rotation);
+                welcomeCtx.scale(this.scale, this.scale);
+                welcomeCtx.globalAlpha = this.opacity;
+
+                const gradient = welcomeCtx.createRadialGradient(0, -5, 0, 0, 0, this.size);
+                gradient.addColorStop(0, this.color2);
+                gradient.addColorStop(0.6, this.color1);
+                gradient.addColorStop(1, this.color1);
+                welcomeCtx.fillStyle = gradient;
+                welcomeCtx.shadowColor = this.color1;
+                welcomeCtx.shadowBlur = 15;
+
+                const s = this.size / 15; // Adjusted scale for path
+                welcomeCtx.beginPath();
+                // Improved heart shape
+                welcomeCtx.moveTo(0, s * 2);
+                welcomeCtx.bezierCurveTo(-s * 6, -s * 4, -s * 6, -s * 8, 0, -s * 9);
+                welcomeCtx.bezierCurveTo(s * 6, -s * 8, s * 6, -s * 4, 0, s * 2);
+                welcomeCtx.fill();
+
+                // Add inner shine
+                welcomeCtx.fillStyle = 'rgba(255,255,255,0.3)';
+                welcomeCtx.beginPath();
+                welcomeCtx.arc(-s * 2, -s * 4, s, 0, Math.PI * 2);
+                welcomeCtx.fill();
+
+                welcomeCtx.restore();
+            }
+        }
+
+        // === TYPE 2: SHOOTING STARS ANIMATION (Friend) ===
+        class ShootingStar {
+            constructor(delay) {
+                this.delay = delay;
+                this.started = false;
+                this.startTime = 0;
+                this.lifetime = 2500 + Math.random() * 1500;
+                this.reset();
+            }
+            reset() {
+                const side = Math.random() < 0.5 ? 'left' : 'top';
+                if (side === 'left') {
+                    this.x = -50;
+                    this.y = Math.random() * canvas.height * 0.5;
+                    this.angle = Math.PI / 6 + Math.random() * 0.3;
+                } else {
+                    this.x = Math.random() * canvas.width * 0.7;
+                    this.y = -50;
+                    this.angle = Math.PI / 4 + Math.random() * 0.4;
+                }
+                this.speed = Math.random() * 12 + 8;
+                this.length = Math.random() * 120 + 80;
+                this.thickness = Math.random() * 3 + 2;
+                this.opacity = 1;
+                const colors = [
+                    ['#ffd700', '#ff8c00'],
+                    ['#ffffff', '#87ceeb'],
+                    ['#fffacd', '#ffd700'],
+                    ['#e0e0ff', '#9370db']
+                ];
+                const c = colors[Math.floor(Math.random() * colors.length)];
+                this.color1 = c[0];
+                this.color2 = c[1];
+                // Sparkles along the trail
+                this.sparkles = [];
+            }
+            update(elapsed) {
+                if (elapsed < this.delay) return false;
+                if (!this.started) {
+                    this.started = true;
+                    this.startTime = elapsed;
+                }
+                const age = elapsed - this.startTime;
+                if (age > this.lifetime) return true;
+
+                this.x += Math.cos(this.angle) * this.speed;
+                this.y += Math.sin(this.angle) * this.speed;
+
+                // Add sparkle
+                if (Math.random() > 0.6) {
+                    this.sparkles.push({
+                        x: this.x - Math.cos(this.angle) * Math.random() * 30,
+                        y: this.y - Math.sin(this.angle) * Math.random() * 30,
+                        size: Math.random() * 4 + 2,
+                        opacity: 1,
+                        decay: 0.03 + Math.random() * 0.02
+                    });
+                }
+
+                // Update sparkles
+                this.sparkles = this.sparkles.filter(s => {
+                    s.opacity -= s.decay;
+                    return s.opacity > 0;
+                });
+
+                this.opacity = Math.max(0, 1 - (age / this.lifetime) * 0.5);
+                return this.x > canvas.width + 100 || this.y > canvas.height + 100;
+            }
+            draw() {
+                if (!this.started || this.opacity <= 0) return;
+                welcomeCtx.save();
+                welcomeCtx.globalAlpha = this.opacity;
+
+                // Draw trail
+                const tailX = this.x - Math.cos(this.angle) * this.length;
+                const tailY = this.y - Math.sin(this.angle) * this.length;
+                const gradient = welcomeCtx.createLinearGradient(this.x, this.y, tailX, tailY);
+                gradient.addColorStop(0, this.color1);
+                gradient.addColorStop(0.3, this.color2);
+                gradient.addColorStop(1, 'transparent');
+
+                welcomeCtx.strokeStyle = gradient;
+                welcomeCtx.lineWidth = this.thickness;
+                welcomeCtx.lineCap = 'round';
+                welcomeCtx.shadowColor = this.color1;
+                welcomeCtx.shadowBlur = 15;
+                welcomeCtx.beginPath();
+                welcomeCtx.moveTo(this.x, this.y);
+                welcomeCtx.lineTo(tailX, tailY);
+                welcomeCtx.stroke();
+
+                // Draw head glow
+                welcomeCtx.fillStyle = '#ffffff';
+                welcomeCtx.shadowBlur = 25;
+                welcomeCtx.beginPath();
+                welcomeCtx.arc(this.x, this.y, this.thickness + 1, 0, Math.PI * 2);
+                welcomeCtx.fill();
+
+                // Draw sparkles
+                this.sparkles.forEach(s => {
+                    welcomeCtx.globalAlpha = s.opacity * this.opacity;
+                    welcomeCtx.fillStyle = this.color1;
+                    welcomeCtx.shadowBlur = 10;
+                    welcomeCtx.beginPath();
+                    // Draw 4-point star sparkle
+                    for (let i = 0; i < 4; i++) {
+                        const angle = (i * Math.PI / 2);
+                        const x = s.x + Math.cos(angle) * s.size;
+                        const y = s.y + Math.sin(angle) * s.size;
+                        if (i === 0) welcomeCtx.moveTo(x, y);
+                        else welcomeCtx.lineTo(x, y);
+                        const midAngle = angle + Math.PI / 4;
+                        const mx = s.x + Math.cos(midAngle) * (s.size * 0.3);
+                        const my = s.y + Math.sin(midAngle) * (s.size * 0.3);
+                        welcomeCtx.lineTo(mx, my);
+                    }
+                    welcomeCtx.closePath();
+                    welcomeCtx.fill();
+                });
+
+                welcomeCtx.restore();
+            }
+        }
+
+        // === TYPE 3: WARM CONFETTI ANIMATION (Family) ===
+        class WarmConfetti {
+            constructor(delay) {
+                this.delay = delay;
+                this.started = false;
+                this.startTime = 0;
+                this.lifetime = 5000 + Math.random() * 2000;
+                this.reset();
+            }
             reset() {
                 this.x = Math.random() * canvas.width;
-                this.y = Math.random() * canvas.height;
-                this.size = Math.random() * 2 + 0.5;
-                this.speedY = -Math.random() * 0.2 - 0.05;
-                this.speedX = (Math.random() - 0.5) * 0.12;
-                this.opacity = Math.random() * 0.4 + 0.1;
-                this.fadeSpeed = Math.random() * 0.002 + 0.001;
-                this.hue = Math.random() * 50 + 35;
+                this.y = -20 - Math.random() * 100;
+                this.width = Math.random() * 12 + 8;
+                this.height = Math.random() * 8 + 4;
+                this.speedY = Math.random() * 2 + 1.5;
+                this.speedX = (Math.random() - 0.5) * 2;
+                this.rotation = Math.random() * Math.PI * 2;
+                this.rotationSpeed = (Math.random() - 0.5) * 0.15;
+                this.wobblePhase = Math.random() * Math.PI * 2;
+                this.wobbleSpeed = Math.random() * 0.08 + 0.04;
+                this.opacity = 1;
+                const colors = [
+                    ['#ff9f43', '#ff6b35'],
+                    ['#ffd93d', '#ff8c00'],
+                    ['#ff7675', '#d63031'],
+                    ['#fdcb6e', '#f39c12'],
+                    ['#fab1a0', '#e17055'],
+                    ['#ffeaa7', '#fdcb6e']
+                ];
+                const c = colors[Math.floor(Math.random() * colors.length)];
+                this.color1 = c[0];
+                this.color2 = c[1];
+                this.shape = Math.floor(Math.random() * 3); // 0: rect, 1: circle, 2: diamond
+            }
+            update(elapsed) {
+                if (elapsed < this.delay) return false;
+                if (!this.started) {
+                    this.started = true;
+                    this.startTime = elapsed;
+                }
+                const age = elapsed - this.startTime;
+                if (age > this.lifetime || this.y > canvas.height + 50) return true;
+
+                this.wobblePhase += this.wobbleSpeed;
+                this.x += this.speedX + Math.sin(this.wobblePhase) * 1.5;
+                this.y += this.speedY;
+                this.rotation += this.rotationSpeed;
+                this.opacity = Math.max(0, 1 - (age / this.lifetime) * 0.7);
+                return false;
+            }
+            draw() {
+                if (!this.started || this.opacity <= 0) return;
+                welcomeCtx.save();
+                welcomeCtx.translate(this.x, this.y);
+                welcomeCtx.rotate(this.rotation);
+                welcomeCtx.globalAlpha = this.opacity;
+
+                const gradient = welcomeCtx.createLinearGradient(-this.width / 2, -this.height / 2, this.width / 2, this.height / 2);
+                gradient.addColorStop(0, this.color1);
+                gradient.addColorStop(1, this.color2);
+                welcomeCtx.fillStyle = gradient;
+                welcomeCtx.shadowColor = this.color2;
+                welcomeCtx.shadowBlur = 8;
+
+                if (this.shape === 0) {
+                    // Rectangle
+                    welcomeCtx.fillRect(-this.width / 2, -this.height / 2, this.width, this.height);
+                } else if (this.shape === 1) {
+                    // Circle
+                    welcomeCtx.beginPath();
+                    welcomeCtx.arc(0, 0, this.width / 2, 0, Math.PI * 2);
+                    welcomeCtx.fill();
+                } else {
+                    // Diamond
+                    welcomeCtx.beginPath();
+                    welcomeCtx.moveTo(0, -this.height);
+                    welcomeCtx.lineTo(this.width / 2, 0);
+                    welcomeCtx.lineTo(0, this.height);
+                    welcomeCtx.lineTo(-this.width / 2, 0);
+                    welcomeCtx.closePath();
+                    welcomeCtx.fill();
+                }
+
+                welcomeCtx.restore();
+            }
+        }
+
+        // === DISTANT BACKGROUND FIREWORKS ===
+        // === DISTANT BACKGROUND FIREWORKS ===
+        class FireworkParticle {
+            constructor(x, y, color, speedMultiplier = 1) {
+                this.x = x;
+                this.y = y;
+                this.color = color;
+                const angle = Math.random() * Math.PI * 2;
+                const speed = (Math.random() * 3 + 1) * speedMultiplier;
+                this.vx = Math.cos(angle) * speed;
+                this.vy = Math.sin(angle) * speed;
+                this.alpha = 1;
+                this.decay = Math.random() * 0.015 + 0.005;
+                this.gravity = 0.05;
             }
             update() {
-                this.y += this.speedY; this.x += this.speedX; this.opacity -= this.fadeSpeed;
-                if (this.opacity <= 0 || this.y < 0) { this.reset(); this.y = canvas.height + 5; this.opacity = Math.random() * 0.4 + 0.1; }
+                this.x += this.vx;
+                this.y += this.vy;
+                this.vy += this.gravity;
+                this.vx *= 0.95; // Drag
+                this.vy *= 0.95;
+                this.alpha -= this.decay;
+                return this.alpha > 0;
             }
             draw() {
-                ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-                ctx.fillStyle = `hsla(${this.hue}, 75%, 60%, ${this.opacity})`; ctx.fill();
+                ctx.globalAlpha = this.alpha * 0.5; // Lower opacity for distant look
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, 1.5, 0, Math.PI * 2);
+                ctx.fill();
             }
         }
 
-        class ShootingStar {
-            constructor() { this.reset(); }
-            reset() { this.x = Math.random() * canvas.width * 0.7; this.y = 0; this.length = Math.random() * 70 + 40; this.speed = Math.random() * 5 + 3; this.angle = Math.PI / 4 + (Math.random() - 0.5) * 0.2; this.opacity = 1; this.active = false; }
-            activate() { this.reset(); this.active = true; }
-            update() { if (!this.active) return; this.x += Math.cos(this.angle) * this.speed; this.y += Math.sin(this.angle) * this.speed; this.opacity -= 0.015; if (this.opacity <= 0 || this.y > canvas.height) this.active = false; }
+        class BackgroundFirework {
+            constructor() {
+                this.reset();
+            }
+            reset() {
+                this.x = Math.random() * canvas.width;
+                this.y = canvas.height;
+                // Explode anywhere from Top 10% to Bottom 85% (Above and Below card)
+                if (Math.random() < 0.6) {
+                    // 60% chance: High up (Top 10% - 40%)
+                    this.targetY = canvas.height * 0.1 + Math.random() * (canvas.height * 0.3);
+                } else {
+                    // 40% chance: Lower down (50% - 85%) - Below card center
+                    this.targetY = canvas.height * 0.5 + Math.random() * (canvas.height * 0.35);
+                }
+
+                // Calculate speed based on distance to travel so it slows down exactly at target
+                // Distance = Speed * Sum(0.98^n) ~= Speed * 50
+                // So Speed ~= Distance / 50
+                const distance = this.y - this.targetY;
+                this.speed = (distance / 50) * (0.9 + Math.random() * 0.2); // +/- Variance
+
+                this.color = `hsl(${Math.random() * 360}, 100%, 70%)`;
+                this.exploded = false;
+                this.particles = [];
+                this.dead = false;
+                this.trail = [];
+                // Size variation: 30% chance of being a "Big" firework
+                this.scale = Math.random() < 0.3 ? 1.5 : 0.8;
+            }
+            update() {
+                if (this.dead) return;
+
+                if (!this.exploded) {
+                    this.y -= this.speed;
+                    this.speed *= 0.98; // Slow down as it rises
+
+                    // Trail effect
+                    this.trail.push({ x: this.x, y: this.y, alpha: 1 });
+                    if (this.trail.length > 10) this.trail.shift();
+                    this.trail.forEach(t => t.alpha -= 0.1);
+
+                    if (this.y <= this.targetY || this.speed < 1) {
+                        this.explode();
+                    }
+                } else {
+                    // Update particles
+                    this.particles = this.particles.filter(p => p.update());
+                    if (this.particles.length === 0) {
+                        this.dead = true;
+                    }
+                }
+            }
+            explode() {
+                this.exploded = true;
+                this.trail = []; // Clear trail
+                const count = this.scale > 1 ? 80 : 40; // More particles for bigger bangs
+                for (let i = 0; i < count; i++) {
+                    this.particles.push(new FireworkParticle(this.x, this.y, this.color, this.scale));
+                }
+            }
+            draw() {
+                if (this.dead) return;
+
+                if (!this.exploded) {
+                    ctx.globalAlpha = 0.6;
+                    ctx.fillStyle = this.color;
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, 2, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    // Draw trail
+                    this.trail.forEach(t => {
+                        ctx.globalAlpha = t.alpha * 0.4;
+                        ctx.fillStyle = this.color;
+                        ctx.beginPath();
+                        ctx.arc(t.x, t.y, 1.5, 0, Math.PI * 2);
+                        ctx.fill();
+                    });
+                } else {
+                    this.particles.forEach(p => p.draw());
+                }
+            }
+        }
+
+        let backgroundFireworks = [];
+
+        // === LIVE AMBIENT BACKGROUND PARTICLES ===
+        class FloatingParticle {
+            constructor() { this.reset(true); }
+            reset(initial = false) {
+                this.x = Math.random() * canvas.width;
+                this.y = initial ? Math.random() * canvas.height : canvas.height + 20;
+                this.size = Math.random() * 2.5 + 0.5;
+                this.speedY = -Math.random() * 0.4 - 0.1;
+                this.speedX = (Math.random() - 0.5) * 0.15;
+                this.opacity = Math.random() * 0.4 + 0.1;
+                this.targetOpacity = this.opacity;
+                this.pulseSpeed = Math.random() * 0.02 + 0.01;
+                this.pulsePhase = Math.random() * Math.PI * 2;
+                this.hue = Math.random() * 40 + 35; // Golden range
+            }
+            update() {
+                this.y += this.speedY;
+                this.x += this.speedX + Math.sin(this.pulsePhase) * 0.05;
+                this.pulsePhase += this.pulseSpeed;
+                this.opacity = this.targetOpacity * (0.7 + Math.sin(this.pulsePhase) * 0.3);
+                if (this.y < -10) this.reset();
+            }
+            draw() {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fillStyle = `hsla(${this.hue}, 80%, 65%, ${this.opacity})`;
+                ctx.shadowColor = `hsla(${this.hue}, 80%, 65%, 0.5)`;
+                ctx.shadowBlur = 8;
+                ctx.fill();
+            }
+        }
+
+        class TwinklingStar {
+            constructor() { this.reset(true); }
+            reset(initial = false) {
+                this.x = Math.random() * canvas.width;
+                this.y = initial ? Math.random() * canvas.height * 0.7 : Math.random() * canvas.height * 0.5;
+                this.size = Math.random() * 1.5 + 0.5;
+                this.twinklePhase = Math.random() * Math.PI * 2;
+                this.twinkleSpeed = Math.random() * 0.08 + 0.03;
+                this.maxOpacity = Math.random() * 0.6 + 0.2;
+                this.lifetime = 8000 + Math.random() * 12000;
+                this.age = initial ? Math.random() * this.lifetime : 0;
+            }
+            update() {
+                this.twinklePhase += this.twinkleSpeed;
+                this.age += 16;
+                if (this.age > this.lifetime) this.reset();
+            }
+            draw() {
+                const twinkle = Math.sin(this.twinklePhase);
+                const opacity = this.maxOpacity * (0.3 + twinkle * 0.7) * Math.min(1, this.age / 1000, (this.lifetime - this.age) / 1000);
+                if (opacity <= 0) return;
+
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.globalAlpha = opacity;
+
+                // 4-point star
+                ctx.fillStyle = '#ffffff';
+                ctx.shadowColor = '#ffffff';
+                ctx.shadowBlur = 10;
+                ctx.beginPath();
+                for (let i = 0; i < 4; i++) {
+                    const angle = (i * Math.PI / 2) - Math.PI / 4;
+                    const outerR = this.size * (1 + twinkle * 0.3);
+                    const innerR = outerR * 0.3;
+                    ctx.lineTo(Math.cos(angle) * outerR, Math.sin(angle) * outerR);
+                    const midAngle = angle + Math.PI / 4;
+                    ctx.lineTo(Math.cos(midAngle) * innerR, Math.sin(midAngle) * innerR);
+                }
+                ctx.closePath();
+                ctx.fill();
+                ctx.restore();
+            }
+        }
+
+        class FloatingOrb {
+            constructor() { this.reset(true); }
+            reset(initial = false) {
+                this.x = Math.random() * canvas.width;
+                this.y = initial ? Math.random() * canvas.height : canvas.height + 30;
+                this.size = Math.random() * 4 + 2;
+                this.speedY = -Math.random() * 0.25 - 0.05;
+                this.driftPhase = Math.random() * Math.PI * 2;
+                this.driftSpeed = Math.random() * 0.008 + 0.004;
+                this.pulsePhase = Math.random() * Math.PI * 2;
+                this.pulseSpeed = Math.random() * 0.02 + 0.01;
+                this.baseOpacity = Math.random() * 0.25 + 0.1;
+                const hues = [35, 45, 280, 200]; // Gold, amber, purple, blue
+                this.hue = hues[Math.floor(Math.random() * hues.length)];
+            }
+            update() {
+                this.driftPhase += this.driftSpeed;
+                this.pulsePhase += this.pulseSpeed;
+                this.x += Math.sin(this.driftPhase) * 0.3;
+                this.y += this.speedY;
+                if (this.y < -20) this.reset();
+            }
+            draw() {
+                const pulse = 0.7 + Math.sin(this.pulsePhase) * 0.3;
+                const size = this.size * pulse;
+                const opacity = this.baseOpacity * pulse;
+
+                // Outer glow
+                const outerGlow = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, size * 4);
+                outerGlow.addColorStop(0, `hsla(${this.hue}, 70%, 60%, ${opacity * 0.3})`);
+                outerGlow.addColorStop(1, 'transparent');
+                ctx.fillStyle = outerGlow;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, size * 4, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Core
+                const coreGlow = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, size);
+                coreGlow.addColorStop(0, `hsla(${this.hue}, 60%, 85%, ${opacity})`);
+                coreGlow.addColorStop(1, `hsla(${this.hue}, 80%, 50%, ${opacity * 0.5})`);
+                ctx.fillStyle = coreGlow;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        // Initialize live background
+        const floatingParticles = Array.from({ length: 40 }, () => new FloatingParticle());
+        const twinklingStars = Array.from({ length: 25 }, () => new TwinklingStar());
+        const floatingOrbs = Array.from({ length: 15 }, () => new FloatingOrb());
+
+        // === BACKGROUND SHOOTING STARS ===
+        class BackgroundShootingStar {
+            constructor() {
+                this.active = false;
+                this.reset();
+            }
+            reset() {
+                this.x = Math.random() * canvas.width * 0.7;
+                this.y = 0;
+                this.length = Math.random() * 80 + 50;
+                this.speed = Math.random() * 6 + 4;
+                this.angle = Math.PI / 4 + (Math.random() - 0.5) * 0.3;
+                this.opacity = 1;
+                this.thickness = Math.random() * 2 + 1;
+                const colors = ['#ffffff', '#ffd700', '#87ceeb'];
+                this.color = colors[Math.floor(Math.random() * colors.length)];
+            }
+            activate() {
+                this.reset();
+                this.active = true;
+            }
+            update() {
+                if (!this.active) return;
+                this.x += Math.cos(this.angle) * this.speed;
+                this.y += Math.sin(this.angle) * this.speed;
+                this.opacity -= 0.012;
+                if (this.opacity <= 0 || this.y > canvas.height || this.x > canvas.width) {
+                    this.active = false;
+                }
+            }
             draw() {
                 if (!this.active) return;
-                const g = ctx.createLinearGradient(this.x, this.y, this.x - Math.cos(this.angle) * this.length, this.y - Math.sin(this.angle) * this.length);
-                g.addColorStop(0, `rgba(255,255,255,${this.opacity})`); g.addColorStop(1, 'rgba(255,255,255,0)');
-                ctx.beginPath(); ctx.moveTo(this.x, this.y); ctx.lineTo(this.x - Math.cos(this.angle) * this.length, this.y - Math.sin(this.angle) * this.length);
-                ctx.strokeStyle = g; ctx.lineWidth = 1.5; ctx.stroke();
+                ctx.save();
+                const tailX = this.x - Math.cos(this.angle) * this.length;
+                const tailY = this.y - Math.sin(this.angle) * this.length;
+                const gradient = ctx.createLinearGradient(this.x, this.y, tailX, tailY);
+                gradient.addColorStop(0, `rgba(255,255,255,${this.opacity})`);
+                gradient.addColorStop(0.3, this.color + Math.floor(this.opacity * 255).toString(16).padStart(2, '0'));
+                gradient.addColorStop(1, 'transparent');
+                ctx.strokeStyle = gradient;
+                ctx.lineWidth = this.thickness;
+                ctx.lineCap = 'round';
+                ctx.shadowColor = this.color;
+                ctx.shadowBlur = 10;
+                ctx.beginPath();
+                ctx.moveTo(this.x, this.y);
+                ctx.lineTo(tailX, tailY);
+                ctx.stroke();
+
+                // Bright head
+                ctx.fillStyle = '#ffffff';
+                ctx.shadowBlur = 15;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.thickness, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
             }
         }
 
-        const particles = Array.from({ length: 50 }, () => new Particle());
-        const stars = [new ShootingStar(), new ShootingStar()];
-        setInterval(() => { const s = stars.find(x => !x.active); if (s && Math.random() > 0.5) s.activate(); }, 3500);
+        const backgroundShootingStars = [new BackgroundShootingStar(), new BackgroundShootingStar(), new BackgroundShootingStar()];
+        let shootingStarsEnabled = false;
 
-        function animate() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            particles.forEach(p => { p.update(); p.draw(); });
-            stars.forEach(s => { s.update(); s.draw(); });
-            requestAnimationFrame(animate);
+        // Periodically spawn shooting stars (only after welcome animation)
+        setInterval(() => {
+            if (shootingStarsEnabled && !animationRunning) {
+                const star = backgroundShootingStars.find(s => !s.active);
+                if (star && Math.random() > 0.4) star.activate();
+            }
+            // Randomly spawn distant fireworks
+            if (Math.random() < 0.3) { // 30% chance every 3s check (add randomness)
+                backgroundFireworks.push(new BackgroundFirework());
+            }
+        }, 3000);
+
+        // === CURSOR TRAIL ANIMATION ===
+        class CursorSparkle {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.size = Math.random() * 3 + 1;
+                this.speedX = (Math.random() - 0.5) * 2;
+                this.speedY = (Math.random() - 0.5) * 2;
+                this.life = 1;
+                this.decay = Math.random() * 0.03 + 0.02;
+                this.color = `hsl(${Math.random() * 50 + 30}, 100%, 80%)`; // Gold/Warm hues
+            }
+            update() {
+                this.x += this.speedX;
+                this.y += this.speedY;
+                this.life -= this.decay;
+                return this.life > 0;
+            }
+            draw() {
+                welcomeCtx.globalAlpha = this.life;
+                welcomeCtx.fillStyle = this.color;
+                welcomeCtx.shadowBlur = 5;
+                welcomeCtx.shadowColor = this.color;
+                welcomeCtx.beginPath();
+                welcomeCtx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                welcomeCtx.fill();
+            }
         }
-        animate();
+
+        let cursorParticles = [];
+        function spawnCursorParticles(x, y) {
+            for (let i = 0; i < 3; i++) {
+                cursorParticles.push(new CursorSparkle(x, y));
+            }
+        }
+
+        // Mouse Move
+        window.addEventListener('mousemove', (e) => {
+            spawnCursorParticles(e.clientX, e.clientY);
+        });
+
+        // Touch Move
+        window.addEventListener('touchmove', (e) => {
+            const touch = e.touches[0];
+            spawnCursorParticles(touch.clientX, touch.clientY);
+        }, { passive: true });
+
+        function updateAndDrawCursorParticles() {
+            cursorParticles = cursorParticles.filter(p => p.update());
+            cursorParticles.forEach(p => p.draw());
+        }
+
+        // Background animation loop - always updates particles
+        function updateBackground() {
+            floatingParticles.forEach(p => p.update());
+            twinklingStars.forEach(s => s.update());
+            floatingOrbs.forEach(o => o.update());
+            backgroundShootingStars.forEach(s => s.update());
+
+            // Smoother firework spawning (1% chance per frame)
+            if (Math.random() < 0.005) {
+                backgroundFireworks.push(new BackgroundFirework());
+            }
+            backgroundFireworks.forEach(fw => fw.update());
+            backgroundFireworks = backgroundFireworks.filter(fw => !fw.dead);
+        }
+
+        function drawBackground() {
+            floatingParticles.forEach(p => p.draw());
+            twinklingStars.forEach(s => s.draw());
+            floatingOrbs.forEach(o => o.draw());
+            backgroundShootingStars.forEach(s => s.draw());
+            backgroundFireworks.forEach(fw => fw.draw());
+        }
+
+        // Background animation loop
+        function animateBackground() {
+            updateBackground();
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drawBackground();
+
+            // Render cursor trail on foreground if welcome animation isn't running
+            if (!animationRunning) {
+                welcomeCtx.clearRect(0, 0, canvas.width, canvas.height);
+                updateAndDrawCursorParticles();
+                updateAndDrawTapParticles();
+            }
+
+            requestAnimationFrame(animateBackground);
+        }
+        animateBackground();
+
+        // === SMOOTH EASING FUNCTIONS ===
+        function easeOutQuart(t) {
+            return 1 - Math.pow(1 - t, 4);
+        }
+
+        function easeOutExpo(t) {
+            return t === 1 ? 1 : 1 - Math.pow(2, -10 * t);
+        }
+
+        // === ANIMATION CONTROLLER ===
+        function startWelcomeAnimation(type) {
+            particles = [];
+            const startTime = performance.now();
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            const fadeOutDuration = 1500; // Smooth 1.5s fade out
+            let fadeOutStart = null;
+
+            switch (type) {
+                case '1': // Hearts burst from center
+                    for (let i = 0; i < 120; i++) { // Increased count for full screen effect
+                        // Random start position across width, distributed vertically with padding
+                        const x = Math.random() * canvas.width;
+                        // Spawn between 15% (below top) and 85% (above bottom)
+                        const y = canvas.height * 0.15 + Math.random() * (canvas.height * 0.7);
+                        particles.push(new BurstHeart(x, y, i * 20));
+                    }
+                    break;
+                case '2': // Shooting stars across screen
+                    for (let i = 0; i < 25; i++) {
+                        particles.push(new ShootingStar(i * 150));
+                    }
+                    break;
+                case '3': // Warm confetti rain
+                    for (let i = 0; i < 80; i++) {
+                        particles.push(new WarmConfetti(i * 50));
+                    }
+                    break;
+                default:
+                    for (let i = 0; i < 60; i++) {
+                        particles.push(new BurstHeart(centerX, centerY, i * 30));
+                    }
+            }
+
+            animationRunning = true;
+
+            function animate() {
+                const elapsed = performance.now() - startTime;
+                welcomeCtx.clearRect(0, 0, welcomeCanvas.width, welcomeCanvas.height);
+
+                let allDone = true;
+                let activeCount = 0;
+
+                particles.forEach(p => {
+                    const done = p.update(elapsed);
+                    if (!done) {
+                        allDone = false;
+                        activeCount++;
+                    }
+                    p.draw();
+                });
+
+                // Update and draw cursor trail during welcome animation
+                updateAndDrawCursorParticles();
+                updateAndDrawTapParticles();
+
+                // Start fade out when particles are mostly done
+                if (activeCount < particles.length * 0.15 && !fadeOutStart) {
+                    fadeOutStart = performance.now();
+                }
+
+                // Apply smooth fade out
+                if (fadeOutStart) {
+                    const fadeProgress = Math.min(1, (performance.now() - fadeOutStart) / fadeOutDuration);
+                    const fadeOpacity = 1 - easeOutQuart(fadeProgress);
+
+                    if (fadeProgress < 1) {
+                        // Redraw with fade
+                        welcomeCtx.save();
+                        welcomeCtx.globalAlpha = fadeOpacity;
+                        welcomeCtx.clearRect(0, 0, welcomeCanvas.width, welcomeCanvas.height);
+                        particles.forEach(p => p.draw());
+                        welcomeCtx.restore();
+                    }
+
+                    if (fadeProgress >= 1) {
+                        allDone = true;
+                    }
+                }
+
+                if (!allDone && animationRunning) {
+                    animationFrame = requestAnimationFrame(animate);
+                } else {
+                    // Animation complete - smooth transition to background
+                    welcomeCtx.clearRect(0, 0, welcomeCanvas.width, welcomeCanvas.height);
+                    animationRunning = false;
+                    // Enable shooting stars after welcome animation ends
+                    shootingStarsEnabled = true;
+                }
+            }
+
+            animate();
+        }
+
+        // Only start animation in view mode (when opening a shared link)
+        if (isViewMode) {
+            // Small delay to let the page render first
+            setTimeout(() => {
+                startWelcomeAnimation(currentType);
+            }, 300);
+        } else {
+            // In creator mode, enable shooting stars immediately
+            shootingStarsEnabled = true;
+        }
     </script>
 </body>
 
